@@ -30,28 +30,28 @@ fn handle_connection(mut stream: TcpStream) {
     stream.read(&mut buffer).unwrap();
 
     let get = b"GET / HTTP/1.1\r\n";
+    let get_all = b"GET /all HTTP/1.1\r\n";
     let sleep = b"GET /sleep HTTP/1.1\r\n";
+    let post_rappel = b"POST /rappel HTTP/1.1\r\n";
 
 
     // TODO replace with match pattern
-    let (status_line, filename) = if buffer.starts_with(get) {
-        ("HTTP/1.1 200 OK", "ok.json")
-    } else if buffer.starts_with(sleep) {
-        thread::sleep(Duration::from_secs(5));
-        ("HTTP/1.1 200 OK", "hello.html")
+    let (status_line, contents) = if buffer.starts_with(get_all) {
+        let rows = match database_service::get_all() {
+            Ok(results) => results,
+            Err(error) => panic!("Fatal: {}", error)
+        };
+        let rows_json = format!("{{\"result\":[{}]}}", rows.join(", "));
+        ("HTTP/1.1 200 OK", rows_json)
+    } else if buffer.starts_with(post_rappel) {
+        
+
+        ("HTTP/1.1 200 OK", "hello.html".to_string())
     } else {
-        ("HTTP/1.1 404 NOT FOUND", "404.html")
+        ("HTTP/1.1 404 NOT FOUND", "Not found".to_string())
     };
 
-    let contents = fs::read_to_string(filename).unwrap();
 
-    let database_result = match database_service::connect() {
-        Ok(()) => 2,
-        Err(error) => {
-            println!("Could not connect to database {:?}", error);
-            2
-        },
-    };
 
     let response = format!(
         "{}\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",
@@ -59,8 +59,10 @@ fn handle_connection(mut stream: TcpStream) {
         "application/json",
         contents.len(),
         contents
+        
     );
 
     stream.write_all(response.as_bytes()).unwrap();
     stream.flush().unwrap();
 }
+
