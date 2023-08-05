@@ -1,12 +1,11 @@
+mod rappels;
+
 use notification_playground::ThreadPool;
-use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::thread;
-use std::time::Duration;
 
-pub mod database_service;
+mod database_service;
 
 // Listen on port 7878 and for each stream incoming create a new thread.
 fn main() {
@@ -37,7 +36,7 @@ fn handle_connection(mut stream: TcpStream) {
 
     // TODO replace with match pattern
     let (status_line, contents) = if buffer.starts_with(get_all) {
-        let rows = match database_service::get_all() {
+        let rows = match rappels::get_all() {
             Ok(results) => results,
             Err(error) => panic!("Fatal: {}", error)
         };
