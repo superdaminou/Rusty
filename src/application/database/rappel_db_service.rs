@@ -1,4 +1,4 @@
-use crate::application::rappels::Rappel;
+use crate::application::rappels::structures::Rappel;
 use crate::application::database::database_service;
 use postgres::Error;
 
