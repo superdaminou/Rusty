@@ -12,7 +12,7 @@ pub fn add_one(rappel : Rappel) -> Result<u64, Error> {
 
     client.close()?;
 
-    return Ok(row_update);
+    Ok(row_update)
 }
 
 
@@ -35,5 +35,5 @@ pub fn get_all() -> Result<Vec<String>, Error> {
 
     client.close()?;
 
-    return Ok(all_rows);
+    Ok(all_rows)
 }
