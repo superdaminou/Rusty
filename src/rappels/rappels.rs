@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
 
-pub struct Rappels {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Rappel {
     pub nom: String,
     pub date_limite: String,
     pub repetition: i32,

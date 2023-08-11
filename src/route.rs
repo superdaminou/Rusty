@@ -1,6 +1,6 @@
-pub const get_all : &str = "GET /all HTTP/1.1";
-pub const post_rappel : &str  = "POST /rappel HTTP/1.1";
+pub const GET_ALL : &str = "GET /all HTTP/1.1";
+pub const POST_RAPPEL : &str  = "POST /rappel HTTP/1.1";
 
 
 
-pub const routes: [&str; 2] = [get_all, post_rappel];
+pub const ROUTES: [&str; 2] = [GET_ALL, POST_RAPPEL];

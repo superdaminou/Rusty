@@ -3,8 +3,17 @@ mod rappels;
 use crate::database_service;
 use postgres::Error;
 
-pub use rappels::Rappels;
+pub use rappels::Rappel;
 
+
+
+pub fn get_rappels() -> String {
+    let rows = match get_all() {
+        Ok(results) => results,
+        Err(error) => panic!("Fatal: {}", error),
+    };
+    return format!("{{\"result\":[{}]}}", rows.join(", "));
+}
 
 
 pub fn get_all() -> Result<Vec<String>, Error> {
@@ -29,7 +38,14 @@ pub fn get_all() -> Result<Vec<String>, Error> {
     return Ok(all_rows);
 }
 
-pub fn add_one(rappel : Rappels) -> Result<u64, Error> {
+pub fn new_rappel(rappel : Rappel) -> String {
+    return match add_one(rappel) {
+        Ok(result)  => result.to_string(),
+        Err(error) => panic!("Fatal: {}", error)
+    };
+}
+
+pub fn add_one(rappel : Rappel) -> Result<u64, Error> {
     let mut client = database_service::connect()?;
 
     println!("Query on table from database_service");
