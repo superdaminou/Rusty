@@ -5,7 +5,12 @@ use crate::application::rappels::Rappel;
 
 pub fn get_rappels() -> (u16, Option<String>) {
     match rappel_db_service::get_all() {
-        Ok(results) => (200, Some(format!("{{\"result\":[{}]}}", results.join(", ")))),
+        Ok(results) => {
+            match serde_json::to_string(&results) {
+                Ok(result) => (200, Some(result)),
+                Err(error) => (500, Some(error.to_string()))
+            }
+        },
         Err(error) => (500, Some(error.to_string())),
     }
 }

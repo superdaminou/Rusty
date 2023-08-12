@@ -1,12 +1,13 @@
 use crate::application::rappels::structures::Rappel;
 use crate::application::database::database_service;
 use postgres::Error;
+use log::info;
 
 
 pub fn add_one(rappel : Rappel) -> Result<u64, Error> {
     let mut client = database_service::connect()?;
 
-    println!("Query on table from database_service");
+    info!("Query on table from database_service");
 
     let row_update = client.execute("INSERT INTO rappels VALUES ($1, TO_DATE($2, 'YYYY-MM-DD'), $3, $4)", &[&rappel.nom, &rappel.date_limite, &rappel.repetition, &rappel.criticite])?;
 
@@ -16,24 +17,28 @@ pub fn add_one(rappel : Rappel) -> Result<u64, Error> {
 }
 
 
-pub fn get_all() -> Result<Vec<String>, Error> {
+pub fn get_all() -> Result<Vec<Rappel>, Error> {
     let mut client = database_service::connect()?;
+    info!("Query on table from database_service");
 
-    let mut all_rows: Vec<String> = Vec::new();
+    let rappels : Vec<Rappel> = match client.query("SELECT * from rappels", &[]) {
 
-    println!("Query on table from database_service");
-
-    match client.query("SELECT * from rappels", &[]) {
-        Ok(rows) => {
-            for row in rows {
-                let name: String = row.get(0);
-                all_rows.push(format!("{{\"id\": \"{}\"}}", name));
-            }
-        }
-        Err(error) => println!("{}", error),
-    }
+        Ok(rows) =>  
+            rows.iter().map(|row|Rappel {
+                    nom: row.get(1),
+                    date_limite:  row.get("date_limite"),
+                    repetition: row.get("repetition"),
+                    criticite: row.get("criticite")
+            }).collect(),
+        Err(error) => {
+            client.close()?;
+            return Err(error)
+        },
+    };
 
     client.close()?;
 
-    Ok(all_rows)
+    info!("Succesful query");
+
+    Ok(rappels)
 }

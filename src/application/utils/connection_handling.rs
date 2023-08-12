@@ -32,9 +32,8 @@ pub fn open_connection(){
 fn handle_connection(mut stream: TcpStream) {
     info!("Handling Connection");
     let mut buffer: [u8; 1024] = [0; 1024];
-    stream.read_exact(&mut buffer).unwrap();
-    info!("{:?}", stream);
-
+    stream.read(&mut buffer).unwrap();
+    
     let request: &str = str::from_utf8(&buffer).unwrap();
     let request_lines : Vec<&str> = request.trim_matches(char::from(0)).split("\r\n").collect();
 
