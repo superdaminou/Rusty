@@ -1,0 +1,10 @@
+services:
+  backend: 
+    image: notification_playground
+    ports:
+      - "127.0.0.1:7878:7878"
+    volumes:
+      - notification:/src/app
+
+volumes:
+  notification:

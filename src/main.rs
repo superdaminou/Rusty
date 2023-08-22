@@ -12,7 +12,7 @@ fn main() {
     info!("Initializing");
     dotenv().ok();
     env_logger::init();
-    
+
     application::utils::connection_handling::open_connection();
     info!("Shutting down.");
 }

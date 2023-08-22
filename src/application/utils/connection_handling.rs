@@ -1,4 +1,4 @@
-use notification_playground::ThreadPool;
+use crate::application::utils::structs::ThreadPool;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
@@ -35,13 +35,13 @@ fn handle_connection(mut stream: TcpStream) {
     stream.read(&mut buffer).unwrap();
     
     let request: &str = str::from_utf8(&buffer).unwrap();
-    let request_lines : Vec<&str> = request.trim_matches(char::from(0)).split("\r\n").collect();
+    let parsed_request : Vec<&str> = request.trim_matches(char::from(0)).split("\r\n").collect();
 
-    info!("Routing: {}", &request_lines[0]);
+    info!("Routing: {}", &parsed_request[0]);
     
-    let (code, contents ) = route_utils::execute_request(request_lines);
+    let (http_code, body ) = route_utils::execute_request(parsed_request);
 
-    let response = constructing_response(code, contents);
+    let response = construct_response_from(http_code, body);
 
     write(stream, response);
 }
@@ -51,10 +51,10 @@ fn write(mut stream : TcpStream, response: String) {
     stream.flush().unwrap();
 }
 
-fn constructing_response(code : u16, mut contents : Option<String>) -> String {
-    let status_line: String= construct_status_line(code);
+fn construct_response_from(http_code : u16, mut body : Option<String>) -> String {
+    let status_line: String= construct_status_line(http_code);
 
-    let content = contents.get_or_insert("".to_string());
+    let content = body.get_or_insert("".to_string());
 
     format!(
         "{}\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",
