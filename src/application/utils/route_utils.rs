@@ -23,7 +23,7 @@ pub fn execute_request(parsed_request : Vec<&str>) -> (u16, Option<String>) {
     };
 
     info!("Executing {:?} with following params : {:?}", function_to_execute.0, function_to_execute.1);
-    return route::execute(*function_to_execute.0, get_body(&parsed_request));
+    return route::execute(*function_to_execute.0, function_to_execute.1, get_body(&parsed_request));
 }
 
 fn split(ressource_line: &str) -> Result<(&str, &str), Error> {
@@ -40,10 +40,10 @@ fn extract_params(incoming : &str, reference : &str) -> Vec<String>{
     info!("Extracting params from : {}", incoming);
     let mut params : Vec<String>= Vec::new();
 
-    let splitted_entering = reference.split("/").collect::<Vec<_>>();
-    let splitted_reference = incoming.split("/").collect::<Vec<_>>();
+    let splitted_entering = incoming.split("/").collect::<Vec<_>>();
+    let splitted_reference = reference.split("/").collect::<Vec<_>>();
 
-    for iterator in 0..splitted_entering.len()-1 {
+    for iterator in 0..splitted_entering.len() {
         let reference_part = splitted_reference.get(iterator).unwrap();
         let entering_part = splitted_entering.get(iterator).unwrap();
 
@@ -82,26 +82,25 @@ fn get_body(request: &[&str] ) -> Option<String> {
 }
 
 fn exist(incoming : (&str, &str), reference : (&str, &str)) -> (bool) {
-    return if incoming.0.eq_ignore_ascii_case(reference.0) {
+    if incoming.0.eq_ignore_ascii_case(reference.0) {
         return compare(incoming.1, reference.1);
     } else {
-        false
+        return false
     }
 }
 
 fn compare(incoming : &str,  reference: &str) -> bool {
-    info!("Start comparing {:?} and {:?}", incoming, reference);
     let splitted_entering = incoming.split("/").collect::<Vec<_>>();
     let splitted_reference = reference.split("/").collect::<Vec<_>>();
 
+    info!("Start comparing {:?} and {:?}", splitted_entering, splitted_reference);
     if !splitted_entering.len().eq(&splitted_reference.len()) {
         return false;
     }
 
-    for iterator in 0..splitted_entering.len()-1 {
+    for iterator in 0..splitted_entering.len() {
         let reference_part = splitted_reference.get(iterator).unwrap();
         let entering_part = splitted_entering.get(iterator).unwrap();
-
         if !reference_part.starts_with("{") && !entering_part.eq(reference_part) {
             return false;
         } 

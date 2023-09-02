@@ -42,3 +42,30 @@ pub fn get_all() -> Result<Vec<Rappel>, Error> {
 
     Ok(rappels)
 }
+
+
+pub fn get_one(id: String) -> Result<Vec<Rappel>, Error> {
+    let mut client = database_service::connect()?;
+    info!("Query on table from database_service");
+
+    let rappels : Vec<Rappel> = match client.query("SELECT * from rappels WHERE rappel_id=$1", &[&id.parse::<i32>().unwrap()]) {
+
+        Ok(rows) =>  
+            rows.iter().map(|row|Rappel {
+                    nom: row.get(1),
+                    date_limite:  row.get("date_limite"),
+                    repetition: row.get("repetition"),
+                    criticite: row.get("criticite")
+            }).collect(),
+        Err(error) => {
+            client.close()?;
+            return Err(error)
+        },
+    };
+
+    client.close()?;
+
+    info!("Succesful query");
+
+    Ok(rappels)
+}

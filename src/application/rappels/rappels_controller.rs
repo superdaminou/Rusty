@@ -15,8 +15,9 @@ pub fn get_rappels() -> (u16, Option<String>) {
     }
 }
 
-pub fn get_rappel(id : u128) -> (u16, Option<String>) {
-    match rappel_db_service::get_all() {
+pub fn get_rappel(id : String) -> (u16, Option<String>) {
+    
+    match rappel_db_service::get_one(id) {
         Ok(results) => {
             match serde_json::to_string(&results) {
                 Ok(result) => (200, Some(result)),
