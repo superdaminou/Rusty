@@ -35,16 +35,14 @@ fn handle_connection(mut stream: TcpStream) {
     stream.read(&mut buffer).unwrap();
     
     let request: &str = str::from_utf8(&buffer).unwrap();
-    let parsed_request : Vec<&str> = request.trim_matches(char::from(0)).split("\r\n").collect();
-
-    info!("Routing: {}", &parsed_request[0]);
     
-    let (http_code, body ) = route_utils::execute_request(parsed_request);
+    let (http_code, body ) = route_utils::execute_request(request);
 
     let response = construct_response_from(http_code, body);
 
     write(stream, response);
 }
+
 
 fn write(mut stream : TcpStream, response: String) {
     stream.write_all(response.as_bytes()).unwrap();

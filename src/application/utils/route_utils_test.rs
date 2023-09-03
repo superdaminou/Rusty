@@ -7,16 +7,16 @@ mod tests {
 
     #[test]
     fn compare_route_ok() {
-        assert_eq!((200, Some("e".to_string())), route_utils::execute_request(vec!["/rappel"]));
+        assert_eq!((200, Some("e".to_string())), route_utils::execute_request("/rappel"));
     }
 
     #[test]
     fn compare_route_ko() {
-        assert_eq!((200, Some("e".to_string())), route_utils::execute_request(vec!["/rappel"]))
+        assert_eq!((200, Some("e".to_string())), route_utils::execute_request("/rappel"))
     }
 
     #[test]
     fn compare_route_ko_id_missing() {
-        assert_eq!((200, Some("e".to_string())), route_utils::execute_request(vec!["/rappel"]))
+        assert_eq!((200, Some("e".to_string())), route_utils::execute_request("/rappel"))
     }
 }

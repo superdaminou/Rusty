@@ -15,7 +15,7 @@ pub fn get_rappels() -> (u16, Option<String>) {
     }
 }
 
-pub fn get_rappel(id : String) -> (u16, Option<String>) {
+pub fn get_rappel(id : i32) -> (u16, Option<String>) {
     
     match rappel_db_service::get_one(id) {
         Ok(results) => {

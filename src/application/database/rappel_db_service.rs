@@ -44,11 +44,11 @@ pub fn get_all() -> Result<Vec<Rappel>, Error> {
 }
 
 
-pub fn get_one(id: String) -> Result<Vec<Rappel>, Error> {
+pub fn get_one(id: i32) -> Result<Vec<Rappel>, Error> {
     let mut client = database_service::connect()?;
-    info!("Query on table from database_service");
+    info!("Getting {}", id);
 
-    let rappels : Vec<Rappel> = match client.query("SELECT * from rappels WHERE rappel_id=$1", &[&id.parse::<i32>().unwrap()]) {
+    let rappels : Vec<Rappel> = match client.query("SELECT * from rappels WHERE rappel_id=$1", &[&id]) {
 
         Ok(rows) =>  
             rows.iter().map(|row|Rappel {
