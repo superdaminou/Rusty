@@ -3,7 +3,7 @@
 
 mod tests {
 
-    use crate::application::utils::route_utils;
+    use crate::application::http::route_utils;
 
     #[test]
     fn compare_route_ok() {

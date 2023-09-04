@@ -1,8 +1,8 @@
-FROM rust:1.67.0
+FROM rust:1.67
 
-WORKDIR /src/app
+WORKDIR /usr/src/rusty
+COPY . .
 
-COPY entrypoint.sh .
-ENTRYPOINT ./entrypoint.sh
+RUN cargo install --path .
 
-
+CMD ["rusty"]

@@ -1,8 +1,7 @@
 use log::info;
-use crate::application::utils::http_request::HttpVerb;
-use crate::application::utils::route;
-
-use super::http_request::HTTPRequest;
+use crate::application::routes::route;
+use crate::application::http::structs::http_request::HttpVerb;
+use crate::application::http::structs::http_request::HTTPRequest;
 
 pub fn execute_request(request : &str) -> (u16, Option<String>) {
     let http_request = HTTPRequest::create_from(request);
@@ -14,9 +13,11 @@ pub fn execute_request(request : &str) -> (u16, Option<String>) {
         None => return (404, None) 
     };
 
-    route::execute(route, http_request)
+    match route::execute(route, http_request) {
+        Ok(result) => result,
+        Err(error) => (500, Some("Internal server error".to_string()))
+    }
 }
-
 
 fn exist(http_request: &HTTPRequest, reference : &(HttpVerb, &str)) -> bool {
     info!("Does {} {} exist", http_request.verb, http_request.route);

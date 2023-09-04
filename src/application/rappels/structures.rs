@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use chrono::{NaiveDate};
+use chrono::NaiveDate;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Rappel {

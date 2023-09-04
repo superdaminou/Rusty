@@ -1,19 +1,19 @@
-use crate::application::utils::structs::ThreadPool;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::str;
 use log::info;
-
-
-use crate::application::utils::route_utils;
+use std::env;
+use crate::application::routes::route_service;
+use crate::application::http::structs::thread_pool::ThreadPool;
 
 const PROTOCOL : &str= "HTTP/1.1";
 
 pub fn open_connection(){
     info!("Opening connection and listening");
 
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let adresse = env::var("SERVER_ADRESS");
+    let listener = TcpListener::bind(adresse.unwrap_or("127.0.0.1:7878".to_string())).unwrap();
     let pool = ThreadPool::new(5);
 
     for stream in listener.incoming() {
@@ -36,7 +36,7 @@ fn handle_connection(mut stream: TcpStream) {
     
     let request: &str = str::from_utf8(&buffer).unwrap();
     
-    let (http_code, body ) = route_utils::execute_request(request);
+    let (http_code, body ) = route_service::execute_request(request);
 
     let response = construct_response_from(http_code, body);
 
