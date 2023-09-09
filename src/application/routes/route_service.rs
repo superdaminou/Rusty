@@ -1,27 +1,28 @@
 use log::info;
 use crate::application::routes::route;
-use crate::application::http::structs::http_request::HttpVerb;
 use crate::application::http::structs::http_request::HTTPRequest;
+use crate::application::http::structs::http_response::HTTPResponse;
+use crate::application::routes::route::Route;
 
-pub fn execute_request(request : &str) -> (u16, Option<String>) {
+pub fn execute_request(request : &str) -> HTTPResponse {
     let http_request = HTTPRequest::create_from(request);
     
     let maybe_route = route::ROUTES.iter().find(|line| exist(&http_request, line));
 
     let route = match maybe_route {
         Some(existing_route) => existing_route,
-        None => return (404, None) 
+        None => return HTTPResponse{code: 404, body: None}
     };
 
     match route::execute(route, http_request) {
         Ok(result) => result,
-        Err(error) => (500, Some("Internal server error".to_string()))
+        Err(error) => HTTPResponse{code: 500, body: Some("Internal server error".to_string())}
     }
 }
 
-fn exist(http_request: &HTTPRequest, reference : &(HttpVerb, &str)) -> bool {
+fn exist(http_request: &HTTPRequest, reference : &Route) -> bool {
     info!("Does {} {} exist", http_request.verb, http_request.route);
-    http_request.verb == reference.0 && compare(&http_request.route, reference.1)
+    http_request.verb == reference.0 && compare(&http_request.route, &reference.1)
 }
 
 fn compare(incoming : &str,  reference: &str) -> bool {
@@ -40,6 +41,5 @@ fn compare(incoming : &str,  reference: &str) -> bool {
             return false;
         } 
     }
-    true
-
+    return true
 }
