@@ -13,6 +13,7 @@ pub const GET_RAPPELS : Route = Route(HttpVerb::GET, "/rappels");
 pub const POST_RAPPEL : Route = Route(HttpVerb::POST, "/rappel");
 pub const GET_RAPPEL : Route = Route(HttpVerb::GET, "/rappel/{id}");
 pub const PUT_RAPPEL : Route = Route(HttpVerb::PUT, "/rappel/{id}");
+pub const NOT_FOUND : Route = Route(HttpVerb::GET, "/not_found");
 
 pub const ROUTES : [Route; 4] = [
     GET_RAPPELS, POST_RAPPEL, GET_RAPPEL, PUT_RAPPEL
@@ -27,6 +28,7 @@ pub fn execute(route : &Route, request : HTTPRequest) -> Result<HTTPResponse, Er
         &POST_RAPPEL => Ok(rappels_controller::add_rappel(as_rappel(request.body))),
         &GET_RAPPEL => Ok(rappels_controller::get_rappel(as_int(params.get(0)))),
         &PUT_RAPPEL => Ok(rappels_controller::get_rappel(as_int(params.get(0)))),
+        &NOT_FOUND => Ok(HTTPResponse {code: 404, body: None}),
         _ => Ok(HTTPResponse {code: 404, body: None})
     }
 }

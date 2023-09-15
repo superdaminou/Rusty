@@ -5,12 +5,12 @@ mod application;
 use log::info;
 use dotenv::dotenv;
 
-// Listen on port 7878 and for each stream incoming create a new thread.
 fn main() {
     info!("Starting server");
 
-    info!("Initializing");
+    info!("Initializing Environment variables");
     dotenv().ok();
+    info!("Initializing Logger");
     env_logger::init();
     
     application::http::connection_handling::open_connection();

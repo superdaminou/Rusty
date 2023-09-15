@@ -13,8 +13,9 @@ const PROTOCOL : &str= "HTTP/1.1";
 pub fn open_connection(){
     info!("Opening connection and listening");
 
-    let adresse = env::var("SERVER_ADRESS");
-    let listener = TcpListener::bind(adresse.unwrap_or("127.0.0.1:7878".to_string())).unwrap();
+    let adresse = env::var("SERVER_ADRESS").unwrap_or("127.0.0.1:7878".to_string());
+    info!("Start listening on {}", adresse);
+    let listener = TcpListener::bind(adresse).unwrap();
     let pool = ThreadPool::new(5);
 
     for stream in listener.incoming() {

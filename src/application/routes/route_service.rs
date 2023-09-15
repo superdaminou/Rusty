@@ -6,6 +6,7 @@ use crate::application::routes::route::Route;
 
 pub fn execute_request(request : &str) -> HTTPResponse {
     let http_request = HTTPRequest::create_from(request);
+    info!("Start executing request: {}", http_request.route);
     
     let maybe_route = route::ROUTES.iter().find(|line| exist(&http_request, line));
 
@@ -21,11 +22,10 @@ pub fn execute_request(request : &str) -> HTTPResponse {
 }
 
 fn exist(http_request: &HTTPRequest, reference : &Route) -> bool {
-    info!("Does {} {} exist", http_request.verb, http_request.route);
-    http_request.verb == reference.0 && compare(&http_request.route, &reference.1)
+    http_request.verb == reference.0 && path_evaluation(&http_request.route, &reference.1)
 }
 
-fn compare(incoming : &str,  reference: &str) -> bool {
+fn path_evaluation(incoming : &str,  reference: &str) -> bool {
     let splitted_entering = incoming.split('/').collect::<Vec<_>>();
     let splitted_reference = reference.split('/').collect::<Vec<_>>();
 
