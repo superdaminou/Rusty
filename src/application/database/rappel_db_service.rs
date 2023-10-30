@@ -63,8 +63,8 @@ pub fn get_one(id: i32) -> Result<Vec<Rappel>, Error> {
     };
 
     client.close()?;
-
-    Ok(rappels)
+ 
+    return Ok(rappels);
 }
 
 

@@ -16,6 +16,7 @@ pub fn open_connection(){
     let adresse = env::var("SERVER_ADRESS").unwrap_or("127.0.0.1:7878".to_string());
     info!("Start listening on {}", adresse);
     let listener = TcpListener::bind(adresse).unwrap();
+    info!("Initializing thread pool : {}", 5);
     let pool = ThreadPool::new(5);
 
     for stream in listener.incoming() {
@@ -38,9 +39,13 @@ fn handle_connection(mut stream: TcpStream) {
     
     let request: &str = str::from_utf8(&buffer).unwrap();
     
+
     let response = route_service::execute_request(request);
 
-    write(stream, construct_response_from(response));
+    let temp = construct_response_from(response);
+    info!("{}", temp);
+
+    write(stream, temp);
 }
 
 
@@ -56,7 +61,7 @@ fn construct_response_from(reponse : HTTPResponse) -> String {
     let content = body.get_or_insert("".to_string());
 
     format!(
-        "{}\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",
+        "{}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",
         status_line,
         "application/json",
         content.len(),

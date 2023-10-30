@@ -1,6 +1,6 @@
 use dotenv::Error;
 use strum_macros::Display;
-use std::str::FromStr;
+use std::{str::FromStr, usize};
 use log::info;
 extern crate strum;
 
@@ -12,13 +12,14 @@ pub struct HTTPRequest {
 
 impl HTTPRequest {
 
-    pub fn create_from(request: &str) -> HTTPRequest {
-        let parsed_request : Vec<&str> = request.trim_matches(char::from(0)).split("\r\n").collect();
-        let route = self::get_route(parsed_request[0]).unwrap();
-        let body = get_body(&parsed_request);
+    pub fn create_from(request: &str) -> Result<HTTPRequest, Error> {
+        let parsed_request : Vec<String>  = request.trim_matches(char::from(0)).split("\r\n").map(|line| line.to_string()).collect();
+        let route = self::get_route(parsed_request.first()).expect("Could not extract route");
+        let body = get_body(parsed_request);
+
 
         
-        HTTPRequest { verb: HttpVerb::from_str(route.0).unwrap(), route: route.1.to_string(), body }
+        return Ok (HTTPRequest { verb: HttpVerb::from_str(route.0.as_str()).unwrap(), route: route.1, body });
     }
 
 
@@ -44,40 +45,55 @@ impl HTTPRequest {
 
 }
 
-fn get_route(ressource_line: &str) -> Result<(&str, &str), Error> {
-    let splitted_ressource =  ressource_line.split(' ').collect::<Vec<&str>>();
-    
-    let http_code = splitted_ressource.first().unwrap();
+fn get_route(ressource_line: Option<&String>) -> Result<(String, String), Error> {
+    let splitted_ressource : Vec<String> =  ressource_line
+            .expect("Cannot extract route")
+            .split(' ')
+            .take(2)
+            .map(|line| line.to_string())
+            .collect();
 
-    let ressource = *splitted_ressource.get(1).unwrap();
+    
+    let http_code = splitted_ressource.get(0)
+        .expect("Can't find HTTP CODE")
+        .to_string();
+    let ressource = splitted_ressource.get(1)
+        .expect("Cant find ressource")
+        .to_string();
 
     Ok((http_code, ressource))
 }
 
 
-fn get_body(request: &[&str] ) -> Option<String> {
+fn get_body(request: Vec<String> ) -> Option<String> {
     info!("Start Extracting body from request");
 
-    let content_length_position = match request.iter().position(|line| line.starts_with("Content-Length: ")) {
-        Some(position) => position,
-        None => return None
+
+    // FIXME Skip if no content lenght 
+    let content_length_position =match request.iter().position(|line| line.starts_with("Content-Length: ")) {
+        None => return None,
+        Some(position) => position
     };
 
-    let content_length_line: &&str = &request[content_length_position];
+
+    let size = request
+        .iter()
+        .nth(content_length_position)
+        .expect("Expected a Content-Length")
+        .to_owned()
+        .drain("Content-Length: ".len()..)
+        .collect::<String>()
+        .parse::<usize>()
+        .expect("Should be a valid number");
     
-    let size = match content_length_line["Content-Length: ".len()..].parse::<usize>() {
-        Ok(size) => size,
-        Err(e) => panic!("{}", e)
-    };
-
     info!("Content-length : {}", size);
-
-    let body: String  = request.to_owned()
-        .drain(content_length_position+1..)
-        .as_slice()
-        .concat();
-
-    info!("Extracted body : {}", body);
+    
+    
+    let body = request
+        .iter()
+        .skip(content_length_position)
+        .flat_map(|s| s.chars())
+        .collect();
     Some(body)
 }
 

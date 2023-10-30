@@ -10,6 +10,7 @@ fn main() {
 
     info!("Initializing Environment variables");
     dotenv().ok();
+ 
     info!("Initializing Logger");
     env_logger::init();
     

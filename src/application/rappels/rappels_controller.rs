@@ -10,8 +10,7 @@ pub fn get_rappels() -> HTTPResponse {
     return HTTPResponse {code: 200, body: Some(rappels_json)}
 }
 
-pub fn get_rappel(id : i32) -> HTTPResponse {
-    
+pub fn get_rappel(id : i32) -> HTTPResponse {    
     match rappel_db_service::get_one(id) {
         Ok(results) => {
             match serde_json::to_string(&results) {

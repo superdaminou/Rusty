@@ -5,7 +5,7 @@ use crate::application::http::structs::http_response::HTTPResponse;
 use crate::application::routes::route::Route;
 
 pub fn execute_request(request : &str) -> HTTPResponse {
-    let http_request = HTTPRequest::create_from(request);
+    let http_request = HTTPRequest::create_from(request).expect("Could not create identifiy request");
     info!("Start executing request: {}", http_request.route);
     
     let maybe_route = route::ROUTES.iter().find(|line| exist(&http_request, line));
