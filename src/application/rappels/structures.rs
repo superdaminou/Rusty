@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDate;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Rappel {
     pub nom: String,
     pub date_limite: NaiveDate,

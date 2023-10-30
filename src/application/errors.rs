@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt;
 use serde_json::Error as SerdeError;
+use tokio_postgres::Error as PostgresError;
 
 #[derive(Debug)]
 pub struct TechnicalError {
@@ -27,6 +28,12 @@ impl Error for TechnicalError {
 
 impl From<SerdeError> for TechnicalError {
     fn from(err: SerdeError) -> Self {
+        TechnicalError::new(err.to_string())
+    }
+}
+
+impl From<PostgresError> for TechnicalError {
+    fn from(err: PostgresError) -> Self {
         TechnicalError::new(err.to_string())
     }
 }
