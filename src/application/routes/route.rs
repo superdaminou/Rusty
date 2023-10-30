@@ -1,9 +1,9 @@
+use crate::application::errors::TechnicalError;
 use crate::application::rappels::rappels_controller;
 use crate::application::http::structs::http_request::HttpVerb;
 use crate::application::http::structs::http_request::HTTPRequest;
 use crate::application::rappels::structures::Rappel;
 use crate::application::http::structs::http_response::HTTPResponse;
-use dotenv::Error;
 use log::info;
 
 #[derive(PartialEq, Eq)]
@@ -20,14 +20,14 @@ pub const ROUTES : [Route; 4] = [
 ];
 
 
-pub fn execute(route : &Route, request : HTTPRequest) -> Result<HTTPResponse, Error> {
+pub fn execute(route : &Route, request : HTTPRequest) -> Result<HTTPResponse, TechnicalError> {
     info!("Executing {:?}", request.route);
     let params = request.extract_params(route.1);
     return match route {   
-        &GET_RAPPELS => Ok(rappels_controller::get_rappels()),
-        &POST_RAPPEL => Ok(rappels_controller::add_rappel(as_rappel(request.body))),
-        &GET_RAPPEL => Ok(rappels_controller::get_rappel(as_int(params.get(0)))),
-        &PUT_RAPPEL => Ok(rappels_controller::get_rappel(as_int(params.get(0)))),
+        &GET_RAPPELS => rappels_controller::get_rappels(),
+        &POST_RAPPEL => rappels_controller::add_rappel(as_rappel(request.body)),
+        &GET_RAPPEL => rappels_controller::get_rappel(as_int(params.get(0))),
+        &PUT_RAPPEL => rappels_controller::get_rappel(as_int(params.get(0))),
         &NOT_FOUND => Ok(HTTPResponse {code: 404, body: None}),
         _ => Ok(HTTPResponse {code: 404, body: None})
     }
