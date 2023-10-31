@@ -5,10 +5,10 @@ use std::fmt;
 const PROTOCOL : &str= "HTTP/1.1";
 
 pub struct HTTPResponse {
-    pub code: i32,
+    code: i32,
     acces_control: String,
-    pub content_type : String,
-    pub body: String
+    content_type : String,
+    body: String
 }
 
 impl HTTPResponse {
