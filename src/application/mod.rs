@@ -1,3 +1,6 @@
+pub mod http;
+
 mod rappels;
-pub mod utils;
 mod database;
+mod routes;
+mod errors;

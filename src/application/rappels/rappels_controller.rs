@@ -1,50 +1,44 @@
-use log::info;
 use crate::application::database::rappel_db_service;
+use crate::application::errors::TechnicalError;
 use crate::application::rappels::Rappel;
+use crate::application::http::structs::response::Response;
 
+pub fn get_rappels() -> Result<Response, TechnicalError> {
 
-pub fn get_rappels() -> (u16, Option<String>) {
-    match rappel_db_service::get_all() {
-        Ok(results) => {
-            match serde_json::to_string(&results) {
-                Ok(result) => (200, Some(result)),
-                Err(error) => (500, Some(error.to_string()))
-            }
-        },
-        Err(error) => (500, Some(error.to_string())),
-    }
+    return rappel_db_service::get_all()
+        .map_err(|err| TechnicalError::from(err))
+        .and_then(|val| serde_json::to_string(&val).map_err(|err| TechnicalError::from(err)))
+        .and_then(|body| Ok(Response((200, Some(body)))));
 }
 
-pub fn get_rappel(id : String) -> (u16, Option<String>) {
-    
-    match rappel_db_service::get_one(id) {
-        Ok(results) => {
-            match serde_json::to_string(&results) {
-                Ok(result) => (200, Some(result)),
-                Err(error) => (500, Some(error.to_string()))
+pub fn get_rappel(id : i32) -> Result<Response, TechnicalError> {   
+    return rappel_db_service::get_one(id)
+        .map_err(|e| TechnicalError::from(e))
+        .and_then(|rappel| {
+            return match rappel {
+                None => Ok(Response((404, None))),
+                Some(rappel) => {
+                    return serde_json::to_string(&rappel)
+                    .map_err(|e|TechnicalError::from(e))
+                    .and_then(|result| Ok(Response((200, Some(result)))));
+                }
             }
-        },
-        Err(error) => (500, Some(error.to_string())),
-    }
+    });
 }
 
+pub fn add_rappel(rappel : Rappel) -> Result<Response, TechnicalError> {
+    return rappel_db_service::add_one(rappel)
+        .map_err(|err| TechnicalError::from(err))
+        .and_then(|val| Ok(Response((200, Some(val.to_string())))));
+}
 
-pub fn add_rappel(body : Option<String>) -> (u16, Option<String>) {
-
-    let body: String = match body {
-        Some(result) => result,
-        None => return (403, Some("Body mandatory".to_string()))
+pub fn update_rappel(rappel : Rappel) -> Result<Response, TechnicalError> {
+    return match rappel_db_service::get_one(rappel.id).is_ok() {
+        true => {
+            return rappel_db_service::update_one(rappel)
+                .map_err(|err| TechnicalError::from(err))
+                .and_then(|val| Ok(Response((200, Some(val.to_string())))))
+        },
+        false => Ok(Response((404, None)))
     };
-    
-
-    info!("Trying to deserialize : {}", body);
-    let rappel: Rappel = match serde_json::from_str(&body) {
-        Ok(rappel) => rappel,
-        Err(err) => return (500, Some(err.to_string()))
-    };
-
-    match rappel_db_service::add_one(rappel) {
-        Ok(result) => (200, Some(result.to_string())),
-        Err(error)=> (500, Some(error.to_string()))
-    }
 }
