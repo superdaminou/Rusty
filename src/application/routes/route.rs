@@ -26,9 +26,9 @@ pub fn execute(route : &Route, request : HTTPRequest) -> Result<Response, Techni
     let params = request.extract_params(route.1);
     let response = match route {   
         &GET_RAPPELS => rappels_controller::get_rappels(),
-        &POST_RAPPEL => rappels_controller::add_rappel(as_rappel(request.body)),
+        &POST_RAPPEL => rappels_controller::add_rappel(Rappel::from(request.body)),
         &GET_RAPPEL => rappels_controller::get_rappel(as_int(params.get(0))),
-        &PUT_RAPPEL => rappels_controller::update_rappel(as_rappel(request.body)),
+        &PUT_RAPPEL => rappels_controller::update_rappel(Rappel::from(request.body)),
         &NOT_FOUND => Ok(Response((404, None))),
         _ => Ok(Response((404, None)))
     };
@@ -39,6 +39,3 @@ fn as_int(var : Option<&String>) -> i32 {
     var.unwrap().parse::<i32>().unwrap().to_owned()
 }
 
-fn as_rappel(body: Option<String>) -> Rappel {
-    return serde_json::from_str(&body.unwrap()).unwrap();
-}

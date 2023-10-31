@@ -23,3 +23,10 @@ impl From<&Row> for Rappel {
         }
     }
 }
+
+
+impl From<Option<String>> for Rappel {
+    fn from(body: Option<String>) -> Self {
+        return serde_json::from_str(&body.unwrap()).unwrap();
+    }
+}
