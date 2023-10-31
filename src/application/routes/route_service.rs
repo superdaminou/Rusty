@@ -1,10 +1,10 @@
 use log::info;
+use crate::application::http::structs::response::Response;
 use crate::application::routes::route;
 use crate::application::http::structs::http_request::HTTPRequest;
-use crate::application::http::structs::http_response::HTTPResponse;
 use crate::application::routes::route::Route;
 
-pub fn execute_request(request : &str) -> HTTPResponse {
+pub fn execute_request(request : &str) -> Response {
     let http_request = HTTPRequest::create_from(request).expect("Could not create identifiy request");
     info!("Start executing request: {}", http_request.route);
     
@@ -12,13 +12,11 @@ pub fn execute_request(request : &str) -> HTTPResponse {
 
     let route = match maybe_route {
         Some(existing_route) => existing_route,
-        None => return HTTPResponse{code: 404, body: None}
+        None => return Response((404,  None))
     };
 
-    match route::execute(route, http_request) {
-        Ok(result) => result,
-        Err(error) => HTTPResponse{code: 500, body: Some("Internal server error".to_string())}
-    }
+    return route::execute(route, http_request) 
+        .unwrap_or_else(|err| Response((500,Some(err.to_string()))));
 }
 
 fn exist(http_request: &HTTPRequest, reference : &Route) -> bool {

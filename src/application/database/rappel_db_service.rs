@@ -45,7 +45,7 @@ pub fn get_one(id: i32) -> Result<Option<Rappel>, TechnicalError> {
             rows.iter().map(row_to_rappel).collect(),
         Err(error) => {
             client.close()?;
-            return Err(TechnicalError::new(error.to_string()))
+            return Err(TechnicalError::from(error))
         },
     };
 
@@ -54,7 +54,7 @@ pub fn get_one(id: i32) -> Result<Option<Rappel>, TechnicalError> {
     return match rappels.iter().count() {
         0  => Ok(None),
         1 => Ok(Some(rappels.iter().clone().next().unwrap().clone())),
-        _ => Err(TechnicalError::new("Should have 1 result max".to_string()))
+        _ => Err(TechnicalError::from("Should have 1 result max".to_string()))
     };
 }
 

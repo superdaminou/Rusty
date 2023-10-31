@@ -9,7 +9,7 @@ pub struct TechnicalError {
 }
 
 impl TechnicalError {
-    pub fn new(msg: String) -> TechnicalError {
+    fn new(msg: String) -> TechnicalError {
         TechnicalError{details: msg}
     }
 }
@@ -38,11 +38,8 @@ impl From<PostgresError> for TechnicalError {
     }
 }
 
-// a test function that returns our error result
-fn raises_my_error(yes: bool) -> Result<(),TechnicalError> {
-    if yes {
-        Err(TechnicalError::new("borked".to_string()))
-    } else {
-        Ok(())
+impl From<String> for TechnicalError {
+    fn from(err: String) -> Self {
+        TechnicalError::new(err)
     }
 }

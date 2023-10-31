@@ -8,7 +8,6 @@ use crate::application::routes::route_service;
 use crate::application::http::structs::thread_pool::ThreadPool;
 use crate::application::http::structs::http_response::HTTPResponse;
 
-const PROTOCOL : &str= "HTTP/1.1";
 
 pub fn open_connection(){
     info!("Opening connection and listening");
@@ -40,44 +39,15 @@ fn handle_connection(mut stream: TcpStream) {
     let request: &str = str::from_utf8(&buffer).unwrap();
     
 
-    let response = route_service::execute_request(request);
+    let response = HTTPResponse::from(route_service::execute_request(request));
 
-    let temp = construct_response_from(response);
-    info!("{}", temp);
+    info!("{}", response.to_string());
 
-    write(stream, temp);
+    write(stream, response.to_string());
 }
 
 
 fn write(mut stream : TcpStream, response: String) {
     stream.write_all(response.as_bytes()).unwrap();
     stream.flush().unwrap();
-}
-
-fn construct_response_from(reponse : HTTPResponse) -> String {
-    let status_line: String= construct_status_line(reponse.code);
-    let mut body = reponse.body;
-
-    let content = body.get_or_insert("".to_string());
-
-    format!(
-        "{}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",
-        status_line,
-        "application/json",
-        content.len(),
-        content
-    )
-}
-
-fn construct_status_line(code : i32) -> String {
-    format!("{} {} {}", PROTOCOL, code, message_from_code(code))
-}
-
-fn message_from_code(code : i32) -> String {
-    match code {
-        200 =>  "OK".to_string(),
-        500 => "INTERNAL".to_string(),
-        404 => "NOT FOUND".to_string(),
-        _  => "WTF".to_string()
-    }
 }

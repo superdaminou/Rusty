@@ -1,4 +1,7 @@
+use std::io::Empty;
+
 use crate::application::errors::TechnicalError;
+use crate::application::http::structs::response::Response;
 use crate::application::rappels::rappels_controller;
 use crate::application::http::structs::http_request::HttpVerb;
 use crate::application::http::structs::http_request::HTTPRequest;
@@ -20,17 +23,18 @@ pub const ROUTES : [Route; 4] = [
 ];
 
 
-pub fn execute(route : &Route, request : HTTPRequest) -> Result<HTTPResponse, TechnicalError> {
+pub fn execute(route : &Route, request : HTTPRequest) -> Result<Response, TechnicalError> {
     info!("Executing {:?}", request.route);
     let params = request.extract_params(route.1);
-    return match route {   
+    let response = match route {   
         &GET_RAPPELS => rappels_controller::get_rappels(),
         &POST_RAPPEL => rappels_controller::add_rappel(as_rappel(request.body)),
         &GET_RAPPEL => rappels_controller::get_rappel(as_int(params.get(0))),
         &PUT_RAPPEL => rappels_controller::get_rappel(as_int(params.get(0))),
-        &NOT_FOUND => Ok(HTTPResponse {code: 404, body: None}),
-        _ => Ok(HTTPResponse {code: 404, body: None})
-    }
+        &NOT_FOUND => Ok(Response((404, None))),
+        _ => Ok(Response((404, None)))
+    };
+    return response;
 }
 
 fn as_int(var : Option<&String>) -> i32 {

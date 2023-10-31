@@ -1,36 +1,28 @@
 use crate::application::database::rappel_db_service;
 use crate::application::errors::TechnicalError;
 use crate::application::rappels::Rappel;
-use crate::application::http::structs::http_response::HTTPResponse;
+use crate::application::http::structs::response::Response;
 
-pub fn get_rappels() -> Result<HTTPResponse, TechnicalError> {
+pub fn get_rappels() -> Result<Response, TechnicalError> {
 
     return rappel_db_service::get_all()
-        .map_err(|err| TechnicalError::new(err.to_string()))
-        .and_then(|val| serde_json::to_string(&val).map_err(|err| TechnicalError::new(err.to_string())))
-        .and_then(|body| Ok(to_http_response(body)));
+        .map_err(|err| TechnicalError::from(err))
+        .and_then(|val| serde_json::to_string(&val).map_err(|err| TechnicalError::from(err)))
+        .and_then(|body| Ok(Response((200, Some(body)))));
 }
 
-pub fn get_rappel(id : i32) -> Result<HTTPResponse, TechnicalError> {   
+pub fn get_rappel(id : i32) -> Result<Response, TechnicalError> {   
 
     return rappel_db_service::get_one(id)
-        .map_err(|e| TechnicalError::new(e.to_string()))
         .and_then(|val| 
             serde_json::to_string(&val)
-            .map_err(|e|TechnicalError::new(e.to_string())))
-        .and_then(|body| Ok(to_http_response(body)));
+            .map_err(|e|TechnicalError::from(e)))
+        .and_then(|body| Ok(Response((200, Some(body)))))
+        .map_err(|e| TechnicalError::from(e));
 }
 
-pub fn add_rappel(rappel : Rappel) -> Result<HTTPResponse, TechnicalError> {
+pub fn add_rappel(rappel : Rappel) -> Result<Response, TechnicalError> {
     return rappel_db_service::add_one(rappel)
-        .map_err(|err| TechnicalError::new(err.to_string()))
-        .and_then(|val| Ok(to_http_response(val.to_string())));
-}
-
-fn to_http_response(body: String) -> HTTPResponse {
-    return HTTPResponse {code: 200, body: Some(body)};
-}
-
-fn to500(error: String) -> HTTPResponse {
-    return HTTPResponse {code: 500, body: Some(error)};
+        .map_err(|err| TechnicalError::from(err))
+        .and_then(|val| Ok(Response((200, Some(val.to_string())))));
 }
