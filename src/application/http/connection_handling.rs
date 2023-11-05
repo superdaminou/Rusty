@@ -38,7 +38,6 @@ fn handle_connection(mut stream: TcpStream) {
     
     let request: &str = str::from_utf8(&buffer).unwrap();
     
-
     let response = HTTPResponse::from(route_service::execute_request(request));
 
     info!("{}", response.to_string());

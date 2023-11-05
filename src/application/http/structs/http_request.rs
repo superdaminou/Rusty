@@ -2,7 +2,6 @@ use dotenv::Error;
 use strum_macros::Display;
 use std::{str::FromStr, usize};
 use log::info;
-extern crate strum;
 
 pub struct HTTPRequest {
     pub verb: HttpVerb,
@@ -21,7 +20,7 @@ impl HTTPRequest {
     }
 
 
-    pub fn extract_params(&self, reference : &str) -> Vec<String>{
+    pub fn extract_params(&self, reference : String) -> Vec<String>{
         info!("Extracting params from : {}", self.route);
         let mut params : Vec<String>= Vec::new();
     
@@ -89,7 +88,7 @@ fn get_body(request: Vec<String> ) -> Option<String> {
     
     let body = request
         .iter()
-        .skip(content_length_position)
+        .skip(content_length_position+1)
         .flat_map(|s| s.chars())
         .collect();
     Some(body)

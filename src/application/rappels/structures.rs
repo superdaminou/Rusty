@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDate;
 use tokio_postgres::Row;
+use log::info;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Rappel {
@@ -25,8 +26,9 @@ impl From<&Row> for Rappel {
 }
 
 
-impl From<Option<String>> for Rappel {
-    fn from(body: Option<String>) -> Self {
-        return serde_json::from_str(&body.unwrap()).unwrap();
+impl From<String> for Rappel {
+    fn from(body: String) -> Self {
+        info!("{}",body);
+        return serde_json::from_str(&body).unwrap();
     }
 }

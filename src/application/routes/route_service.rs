@@ -1,4 +1,5 @@
 use log::info;
+use route::ParamsHandler;
 use crate::application::http::structs::response::Response;
 use crate::application::routes::route;
 use crate::application::http::structs::http_request::HTTPRequest;
@@ -8,19 +9,16 @@ pub fn execute_request(request : &str) -> Response {
     let http_request = HTTPRequest::create_from(request).expect("Could not create identifiy request");
     info!("Start executing request: {}", http_request.route);
     
-    let maybe_route = route::ROUTES.iter().find(|line| exist(&http_request, line));
-
-    let route = match maybe_route {
-        Some(existing_route) => existing_route,
-        None => return Response((404,  None))
-    };
-
-    return route::execute(route, http_request) 
-        .unwrap_or_else(|err| Response((500,Some(err.to_string()))));
+     return route::routes().iter()
+        .find(|route| equals(&http_request, &route))
+        .map_or(
+            Ok(Response((404, None))) 
+            ,|route| (route.method)(ParamsHandler { params : http_request.extract_params(route.route.clone()), body: http_request.body } ))
+        .unwrap_or_else(|err| Response((500, Some(err.to_string()))));
 }
 
-fn exist(http_request: &HTTPRequest, reference : &Route) -> bool {
-    http_request.verb == reference.0 && path_evaluation(&http_request.route, &reference.1)
+fn equals(http_request: &HTTPRequest, reference : &Route) -> bool {
+    http_request.verb == reference.verb && path_evaluation(&http_request.route, &reference.route)
 }
 
 fn path_evaluation(incoming : &str,  reference: &str) -> bool {

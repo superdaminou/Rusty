@@ -61,9 +61,7 @@ pub fn get_one(id: i32) -> Result<Option<Rappel>, TechnicalError> {
 pub fn update_one(rappel : Rappel) -> Result<u64, Error> {
     let mut client = database_service::connect()?;
     info!("Updating rappel: {}", rappel.id);
-
-    let row_update = client.execute("INSERT INTO rappels (nom, date_limite, repetition, criticite) VALUES ($1, $2, $3, $4)", &[&rappel.nom, &rappel.date_limite, &rappel.repetition, &rappel.criticite])?;
-
+    let row_update = client.execute("UPDATE rappels SET nom=$1, date_limite=$2, repetition=$3, criticite=$4 WHERE rappel_id=$5", &[&rappel.nom, &rappel.date_limite, &rappel.repetition, &rappel.criticite, &rappel.id])?;
     client.close()?;
 
     Ok(row_update)
