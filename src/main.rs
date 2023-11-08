@@ -5,6 +5,8 @@ mod application;
 use log::info;
 use dotenv::dotenv;
 
+use crate::application::{http, routes};
+
 fn main() {
     info!("Starting server");
 
@@ -14,6 +16,6 @@ fn main() {
     info!("Initializing Logger");
     env_logger::init();
     
-    application::http::connection_handling::open_connection();
+    http::connection_handling::open_connection(routes::route_service::execute_request);
     info!("Shutting down.");
 }

@@ -4,12 +4,13 @@ use std::net::TcpStream;
 use std::str;
 use log::info;
 use std::env;
-use crate::application::routes::route_service;
 use crate::application::http::structs::thread_pool::ThreadPool;
 use crate::application::http::structs::http_response::HTTPResponse;
+use crate::application::http::structs::http_request::HTTPRequest;
 
+use super::structs::response::Response;
 
-pub fn open_connection(){
+pub fn open_connection(handler : fn(HTTPRequest) -> Response){
     info!("Opening connection and listening");
 
     let adresse = env::var("SERVER_ADRESS").unwrap_or("127.0.0.1:7878".to_string());
@@ -21,8 +22,8 @@ pub fn open_connection(){
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        pool.execute(|| {
-            handle_connection(stream);
+        pool.execute(move || {
+            handle_connection(stream, handler);
         });
     }
 }
@@ -31,14 +32,14 @@ pub fn open_connection(){
 // PRIVATE
 
 // Router
-fn handle_connection(mut stream: TcpStream) {
+fn handle_connection(mut stream: TcpStream, handler : fn(HTTPRequest) -> Response) {
     info!("Handling Connection");
     let mut buffer: [u8; 1024] = [0; 1024];
     stream.read(&mut buffer).unwrap();
     
     let request: &str = str::from_utf8(&buffer).unwrap();
-    
-    let response = HTTPResponse::from(route_service::execute_request(request));
+    let http_request = HTTPRequest::from(request);
+    let response = HTTPResponse::from((handler)(http_request));
 
     info!("{}", response.to_string());
 

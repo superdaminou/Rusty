@@ -14,12 +14,13 @@ pub struct ParamsHandler {
 }
 
 
-pub fn routes() -> [Route; 4] {
+pub fn routes() -> [Route; 5] {
     let routes = [
         Route {verb: HttpVerb::GET,   route: "/rappels".to_string(), method: rappels_controller::get_rappels},
         Route {verb: HttpVerb::GET, route: "/rappel/{id}".to_string(),method: rappels_controller::get_rappel},
         Route {verb: HttpVerb::POST,   route: "/rappel".to_string(), method: rappels_controller::add_rappel},
         Route {verb: HttpVerb::PUT,   route: "/rappel/{id}".to_string(), method: rappels_controller::update_rappel},
+        Route {verb: HttpVerb::DELETE,   route: "/rappel/{id}".to_string(), method: rappels_controller::delete_rappel},
         ];
 
     return routes;

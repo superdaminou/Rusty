@@ -1,7 +1,7 @@
 use crate::application::errors::TechnicalError;
 use crate::application::rappels::structures::Rappel;
 use crate::application::database::database_service;
-use postgres::Error;
+use postgres::{Error, GenericClient};
 use log::info;
 
 pub fn add_one(rappel : Rappel) -> Result<u64, Error> {
@@ -65,4 +65,15 @@ pub fn update_one(rappel : Rappel) -> Result<u64, Error> {
     client.close()?;
 
     Ok(row_update)
+}
+
+
+pub fn delete_one(id : i32) -> Result<u64, Error> {
+    let mut client = database_service::connect()?;
+    info!("Updating rappel: {}", id);
+    let statement = client.prepare("DELETE FROM rappels WHERE rappel_id=$1")?;
+    let rows = client.execute(&statement, &[&id])?;
+    client.close()?;
+
+    Ok(rows)
 }

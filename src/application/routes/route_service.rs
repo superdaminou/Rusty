@@ -5,8 +5,7 @@ use crate::application::routes::route;
 use crate::application::http::structs::http_request::HTTPRequest;
 use crate::application::routes::route::Route;
 
-pub fn execute_request(request : &str) -> Response {
-    let http_request = HTTPRequest::create_from(request).expect("Could not create identifiy request");
+pub fn execute_request(http_request : HTTPRequest) -> Response {
     info!("Start executing request: {}", http_request.route);
     
      return route::routes().iter()

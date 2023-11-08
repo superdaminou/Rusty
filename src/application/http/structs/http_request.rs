@@ -9,16 +9,24 @@ pub struct HTTPRequest {
     pub body: Option<String>
 }
 
-impl HTTPRequest {
 
-    pub fn create_from(request: &str) -> Result<HTTPRequest, Error> {
-        let parsed_request : Vec<String>  = request.trim_matches(char::from(0)).split("\r\n").map(|line| line.to_string()).collect();
-        let route = self::get_route(parsed_request.first()).expect("Could not extract route");
-        let body = get_body(parsed_request);
-        
-        return Ok (HTTPRequest { verb: HttpVerb::from_str(route.0.as_str()).unwrap(), route: route.1, body });
+impl From<&str> for HTTPRequest {
+    fn from(request : &str) -> Self {
+        create_from(request).unwrap_or(HTTPRequest { verb: HttpVerb::GET, route: "/malformed".to_string(), body: None })
     }
+}
 
+
+pub fn create_from(request: &str) -> Result<HTTPRequest, Error> {
+    let parsed_request : Vec<String>  = request.trim_matches(char::from(0)).split("\r\n").map(|line| line.to_string()).collect();
+    let route = self::get_route(parsed_request.first()).expect("Could not extract route");
+    let body = get_body(parsed_request);
+    
+    return Ok (HTTPRequest { verb: HttpVerb::from_str(route.0.as_str()).unwrap(), route: route.1, body });
+}
+
+
+impl HTTPRequest {
 
     pub fn extract_params(&self, reference : String) -> Vec<String>{
         info!("Extracting params from : {}", self.route);
