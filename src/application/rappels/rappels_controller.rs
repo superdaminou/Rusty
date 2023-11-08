@@ -21,14 +21,10 @@ pub fn get_rappel(handler: ParamsHandler) -> Result<Response, TechnicalError> {
             .transpose()
             .map_err(|e| TechnicalError::from("err".to_string()))?
             .map(|id| rappel_db_service::get_one(id))
+            .transpose()?.flatten()
+            .map(|rappel| serde_json::to_string(&rappel).map_err(|e|TechnicalError::from("serialisation error".to_string())))
             .transpose()
-            .map(|opt| opt.flatten())
-            .and_then(|rappel| match rappel {
-                None => Ok(Response((404, None))),
-                Some(rappel) => serde_json::to_string(&rappel)
-                        .map_err(|e|TechnicalError::from("serialisation".to_string()))
-                        .map(|rappel| Response((200, Some(rappel))))
-            });
+            .map(|rappel| rappel.map_or(Response((404, Some("Not found".to_string()))), |rappel|  Response((200, Some(rappel)))));
 }
 
 
