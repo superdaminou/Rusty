@@ -1,6 +1,7 @@
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::panic::catch_unwind;
 use std::str;
 use log::info;
 use std::env;
@@ -36,13 +37,17 @@ fn handle_connection(mut stream: TcpStream, handler : fn(HTTPRequest) -> Respons
     info!("Handling Connection");
     let mut buffer: [u8; 1024] = [0; 1024];
     stream.read(&mut buffer).unwrap();
+
+    let response = str::from_utf8(&buffer)
+        .map(HTTPRequest::from)
+        .map(|request |
+            catch_unwind(|| (handler)(HTTPRequest::from(request)))
+            .unwrap_or_else(|err| Response((500, Some(String::from("Internal Error"))))))
+        .map(|response| HTTPResponse::from(response))
+        .unwrap_or_else(|err| HTTPResponse::from(Response((500, Some(String::from("Parsing error"))))));
     
-    let request: &str = str::from_utf8(&buffer).unwrap();
-    let http_request = HTTPRequest::from(request);
-    let response = HTTPResponse::from((handler)(http_request));
 
     info!("{}", response.to_string());
-
     write(stream, response.to_string());
 }
 
