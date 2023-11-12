@@ -5,6 +5,7 @@ use crate::application::routes::route;
 use crate::application::http::structs::http_request::HTTPRequest;
 use crate::application::routes::route::Route;
 
+
 pub fn execute_request(http_request : HTTPRequest) -> Response {
     info!("Start executing request: {}", http_request.route);
     
@@ -37,4 +38,24 @@ fn path_evaluation(incoming : &str,  reference: &str) -> bool {
         } 
     }
     return true
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+    #[test]
+    fn path_equals() {
+        let result = path_evaluation("/path", "/path");
+        assert_eq!(result, true);
+    }
+
+
+    #[test]
+    fn path_not_equals() {
+        let result = path_evaluation("/paths", "/path");
+        assert_eq!(result, true);
+    }
 }

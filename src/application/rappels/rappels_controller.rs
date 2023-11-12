@@ -19,10 +19,12 @@ pub fn get_rappel(handler: ParamsHandler) -> Result<Response, TechnicalError> {
             .next()
             .map(|id| id.parse::<i32>())
             .transpose()
-            .map_err(|e| TechnicalError::from("err".to_string()))?
+            .map_err(|e| TechnicalError::from("Parsing Error".to_string()))?
             .map(|id| rappel_db_service::get_one(id))
             .transpose()?.flatten()
-            .map(|rappel| serde_json::to_string(&rappel).map_err(|e|TechnicalError::from("serialisation error".to_string())))
+            .map(|rappel|  
+                serde_json::to_string(&rappel)
+                .map_err(|e|TechnicalError::from("serialisation error".to_string())))
             .transpose()
             .map(|rappel| rappel.map_or(Response((404, Some("Not found".to_string()))), |rappel|  Response((200, Some(rappel)))));
 }
