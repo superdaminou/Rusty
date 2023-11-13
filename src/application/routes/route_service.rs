@@ -24,8 +24,7 @@ fn equals(http_request: &HTTPRequest, reference : &Route) -> bool {
 fn path_evaluation(incoming : &str,  reference: &str) -> bool {
     let splitted_entering = incoming.split('/').collect::<Vec<_>>();
     let splitted_reference = reference.split('/').collect::<Vec<_>>();
-
-    info!("Start comparing {:?} and {:?}", splitted_entering, splitted_reference);
+    
     if !splitted_entering.len().eq(&splitted_reference.len()) {
         return false;
     }

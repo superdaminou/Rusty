@@ -1,7 +1,9 @@
-use dotenv::Error;
-use strum_macros::Display;
 use std::{str::FromStr, usize};
 use log::info;
+
+use crate::application::http::errors::malformed::MalformedError;
+
+use super::HttpVerb;
 
 pub struct HTTPRequest {
     pub verb: HttpVerb,
@@ -17,12 +19,16 @@ impl From<&str> for HTTPRequest {
 }
 
 
-pub fn create_from(request: &str) -> Result<HTTPRequest, Error> {
+fn create_from(request: &str) -> Result<HTTPRequest, MalformedError> {
     let parsed_request : Vec<String>  = request.trim_matches(char::from(0)).split("\r\n").map(|line| line.to_string()).collect();
     let route = self::get_route(parsed_request.first()).expect("Could not extract route");
+    info!("Route to: {} {}", route.0, route.1);
+
     let body = get_body(parsed_request);
+
+    let verb = HttpVerb::from_str(route.0.as_str()).map_err(|_| MalformedError::from("Parsing error"))?;
     
-    return Ok (HTTPRequest { verb: HttpVerb::from_str(route.0.as_str()).unwrap(), route: route.1, body });
+    return Ok (HTTPRequest { verb: verb, route: route.1, body });
 }
 
 
@@ -50,7 +56,7 @@ impl HTTPRequest {
 
 }
 
-fn get_route(ressource_line: Option<&String>) -> Result<(String, String), Error> {
+fn get_route(ressource_line: Option<&String>) -> Result<(String, String), MalformedError> {
     let splitted_ressource : Vec<String> =  ressource_line
             .expect("Cannot extract route")
             .split(' ')
@@ -73,8 +79,6 @@ fn get_route(ressource_line: Option<&String>) -> Result<(String, String), Error>
 fn get_body(request: Vec<String> ) -> Option<String> {
     info!("Start Extracting body from request");
 
-
-    // FIXME Skip if no content lenght 
     let content_length_position =match request.iter().position(|line| line.starts_with("Content-Length: ")) {
         None => return None,
         Some(position) => position
@@ -96,33 +100,10 @@ fn get_body(request: Vec<String> ) -> Option<String> {
     
     let body = request
         .iter()
-        .skip(content_length_position+1)
+        .skip(request.iter().position(|value| (*value).starts_with("{"))?)
         .flat_map(|s| s.chars())
         .collect();
+
+    info!("Body: {}", body);
     Some(body)
-}
-
-
-#[derive(PartialEq, Eq, Display)]
-pub enum HttpVerb {
-    POST,
-    GET,
-    PUT,
-    DELETE,
-    PATCH
-}
-
-impl FromStr for HttpVerb {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<HttpVerb, Self::Err> {
-        match input {
-            "POST" => Ok(Self::POST),
-            "GET" => Ok(Self::GET),
-            "PUT" => Ok(Self::PUT),
-            "DELETE" => Ok(Self::DELETE),
-            "PATCH" => Ok(Self::PATCH),
-            _ => Err(())
-        }
-    }
 }

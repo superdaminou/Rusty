@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDate;
 use tokio_postgres::Row;
-use log::info;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Rappel {
-    pub id: i32,
+    pub id: Option<i32>,
     pub nom: String,
     pub date_limite: NaiveDate,
     pub repetition: i32,
@@ -22,13 +21,5 @@ impl From<&Row> for Rappel {
             repetition: row.get("repetition"),
             criticite: row.get("criticite")
         }
-    }
-}
-
-
-impl From<String> for Rappel {
-    fn from(body: String) -> Self {
-        info!("{}",body);
-        return serde_json::from_str(&body).unwrap();
     }
 }

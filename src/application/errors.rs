@@ -38,8 +38,8 @@ impl From<PostgresError> for TechnicalError {
     }
 }
 
-impl From<String> for TechnicalError {
-    fn from(err: String) -> Self {
-        TechnicalError::new(err)
+impl From<&str> for TechnicalError {
+    fn from(err: &str) -> Self {
+        TechnicalError::new(String::from(err))
     }
 }

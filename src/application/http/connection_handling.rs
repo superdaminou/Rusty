@@ -5,10 +5,13 @@ use std::panic::catch_unwind;
 use std::str;
 use log::info;
 use std::env;
+use crate::application::http::errors::internal::InternalError;
+use crate::application::http::errors::malformed::MalformedError;
 use crate::application::http::structs::thread_pool::ThreadPool;
 use crate::application::http::structs::http_response::HTTPResponse;
 use crate::application::http::structs::http_request::HTTPRequest;
 
+use super::HttpVerb;
 use super::structs::response::Response;
 
 pub fn open_connection(handler : fn(HTTPRequest) -> Response){
@@ -38,13 +41,12 @@ fn handle_connection(mut stream: TcpStream, handler : fn(HTTPRequest) -> Respons
     let mut buffer: [u8; 1024] = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
-    let response = str::from_utf8(&buffer)
+    let response = 
+        str::from_utf8(&buffer)
+        .map_err(|error| MalformedError::from(error))
         .map(HTTPRequest::from)
-        .map(|request |
-            catch_unwind(|| (handler)(HTTPRequest::from(request)))
-            .unwrap_or_else(|err| Response((500, Some(String::from("Internal Error"))))))
-        .map(|response| HTTPResponse::from(response))
-        .unwrap_or_else(|err| HTTPResponse::from(Response((500, Some(String::from("Parsing error"))))));
+        .map(|request | handle_request(request, handler))
+        .unwrap_or_else(|err| HTTPResponse::from(err));
     
 
     info!("{}", response.to_string());
@@ -55,4 +57,21 @@ fn handle_connection(mut stream: TcpStream, handler : fn(HTTPRequest) -> Respons
 fn write(mut stream : TcpStream, response: String) {
     stream.write_all(response.as_bytes()).unwrap();
     stream.flush().unwrap();
+}
+
+fn handle_request(request: HTTPRequest, handler : fn(HTTPRequest) -> Response) -> HTTPResponse {
+    catch_unwind(|| {
+        match request.verb {
+            HttpVerb::OPTION => options(),
+            _ => HTTPResponse::from((handler)(request))
+
+        }
+    })
+    .map_err(|_| InternalError::from("Internal Server Error"))
+    .unwrap_or_else(|err| HTTPResponse::from(err))
+}
+
+fn options() -> HTTPResponse {
+    let headers = vec!["Access-Control-Allow-Methods: POST, GET, OPTIONS".to_string()];
+    HTTPResponse::from(headers)
 }

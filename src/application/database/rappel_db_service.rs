@@ -1,7 +1,6 @@
-use crate::application::errors::TechnicalError;
-use crate::application::rappels::structures::Rappel;
+use crate::application::{errors::TechnicalError, rappels::structs::Rappel};
 use crate::application::database::database_service;
-use postgres::{Error, GenericClient};
+use postgres::Error;
 use log::info;
 
 pub fn add_one(rappel : Rappel) -> Result<u64, Error> {
@@ -53,14 +52,14 @@ pub fn get_one(id: i32) -> Result<Option<Rappel>, TechnicalError> {
     return match rappels.iter().count() {
         0  => Ok(None),
         1 => Ok(Some(rappels.iter().clone().next().unwrap().clone())),
-        _ => Err(TechnicalError::from("Should have 1 result max".to_string()))
+        _ => Err(TechnicalError::from("Should have 1 result max"))
     };
 }
 
 
 pub fn update_one(rappel : Rappel) -> Result<u64, Error> {
     let mut client = database_service::connect()?;
-    info!("Updating rappel: {}", rappel.id);
+    info!("Updating rappel: {}", rappel.id.expect("Should have and id"));
     let row_update = client.execute("UPDATE rappels SET nom=$1, date_limite=$2, repetition=$3, criticite=$4 WHERE rappel_id=$5", &[&rappel.nom, &rappel.date_limite, &rappel.repetition, &rappel.criticite, &rappel.id])?;
     client.close()?;
 
@@ -70,7 +69,7 @@ pub fn update_one(rappel : Rappel) -> Result<u64, Error> {
 
 pub fn delete_one(id : i32) -> Result<u64, Error> {
     let mut client = database_service::connect()?;
-    info!("Updating rappel: {}", id);
+    info!("Deleting rappel: {}", id);
     let statement = client.prepare("DELETE FROM rappels WHERE rappel_id=$1")?;
     let rows = client.execute(&statement, &[&id])?;
     client.close()?;
