@@ -1,1 +1,0 @@
-pub struct Response(pub (i32, Option<String>));
