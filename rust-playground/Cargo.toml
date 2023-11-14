@@ -1,5 +1,5 @@
 [package]
-name = "notification-playground"
+name = "rust-playground"
 version = "0.1.0"
 edition = "2021"
 
