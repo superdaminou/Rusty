@@ -8,13 +8,12 @@ use crate::application::routes::route::Route;
 
 pub fn execute_request(http_request : HTTPRequest) -> Response {
     info!("Start executing request: {}", http_request.route);
-    
-     return route::routes().iter()
+
+    return route::routes().iter()
         .find(|route| equals(&http_request, &route))
-        .map_or(
-            Ok(Response::from(404)) 
-            ,|route| (route.method)(ParamsHandler { params : http_request.extract_params(route.route.clone()), body: http_request.body } ))
-        .unwrap_or_else(|err| Response::from((500, err.to_string().as_str())));
+        .map_or(Response::from(404), |route| 
+            (route.method)(ParamsHandler::from((http_request.extract_params(route.route.clone()), http_request.body)))
+            .unwrap_or_else(|err| Response::from((500, err.to_string()))));
 }
 
 fn equals(http_request: &HTTPRequest, reference : &Route) -> bool {

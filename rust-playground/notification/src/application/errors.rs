@@ -45,18 +45,3 @@ impl From<&str> for TechnicalError {
         TechnicalError::new(String::from(err))
     }
 }
-
-/*
-impl From<TechnicalError> for HTTPResponse {
-    fn from(error: TechnicalError) -> Self {
-        HTTPResponse::new(500, Vec::new(),  Some(error.to_string().as_str()))
-    }
-}
-
-
-impl From<Result<Response, TechnicalError>> for HTTPResponse {
-    fn from(result: Result<Response, TechnicalError>) -> Self {
-        return HTTPResponse::from(result.unwrap_or_else(|err| Response((500, Some(err.to_string())))));
-    }
-} 
-*/

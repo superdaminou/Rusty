@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{error::Error, str::Utf8Error};
+use std::{error::Error, str::Utf8Error, num::ParseIntError};
 
 use crate::http::structs::{http_response::HTTPResponse, response::Response};
 
@@ -41,8 +41,20 @@ impl From<Utf8Error> for MalformedError {
     }
 }
 
+impl From<ParseIntError> for MalformedError {
+    fn from(_: ParseIntError) -> Self {
+        MalformedError::new("Expected a valid integer".to_string())
+    }
+}
+
 impl From<MalformedError> for HTTPResponse {
     fn from(_: MalformedError) -> Self {
         return HTTPResponse::from(Response::from((400, "Malformed Url")));
+    }
+}
+
+impl PartialEq<MalformedError> for MalformedError {
+    fn eq(&self, other: &MalformedError) -> bool {
+          return self.details == other.details;
     }
 }

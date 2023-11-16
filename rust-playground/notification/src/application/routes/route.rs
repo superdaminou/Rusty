@@ -13,6 +13,12 @@ pub struct ParamsHandler {
     pub body: Option<String>
 }
 
+impl From<(Vec<String>, Option<String>)> for ParamsHandler {
+    fn from(value: (Vec<String>, Option<String>)) -> Self {
+        ParamsHandler { params : value.0, body: value.1 }
+    }
+}
+
 
 pub fn routes() -> [Route; 5] {
     let routes = [

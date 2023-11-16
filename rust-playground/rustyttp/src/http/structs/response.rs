@@ -12,8 +12,6 @@ impl Response {
 }
 
 
-
-
 impl From<i32> for Response {
     fn from(code: i32) -> Self {
         return Response::new(code, Vec::new(), None);

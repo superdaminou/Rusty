@@ -16,7 +16,6 @@ use super::structs::response::Response;
 
 pub fn open_connection(handler : fn(HTTPRequest) -> Response){
     info!("Opening connection and listening");
-
     let adresse = env::var("SERVER_ADRESS").unwrap_or("127.0.0.1:7878".to_string());
     info!("Start listening on {}", adresse);
     let listener = TcpListener::bind(adresse).unwrap();
@@ -43,12 +42,17 @@ fn handle_connection(mut stream: TcpStream, handler : fn(HTTPRequest) -> Respons
 
     let response = 
         str::from_utf8(&buffer)
-        .map_err(|error| MalformedError::from(error))
-        .map(HTTPRequest::from)
-        .map(|request | handle_request(request, handler))
+        .map_err(|error| 
+            MalformedError::from(error))
+        .map(|request| 
+            HTTPRequest::request_from(request))
+        .map(|request | 
+            request.map(|request| 
+                handle_request(request, handler))
+                .unwrap_or_else(|error| HTTPResponse::from(error)))
         .unwrap_or_else(|err| HTTPResponse::from(err));
-    
 
+            
     info!("{}", response.to_string());
     write(stream, response.to_string());
 }
@@ -72,6 +76,6 @@ fn handle_request(request: HTTPRequest, handler : fn(HTTPRequest) -> Response) -
 }
 
 fn options() -> HTTPResponse {
-    let headers = vec!["Access-Control-Allow-Methods: POST, GET, OPTIONS".to_string()];
+    let headers = vec!["Access-Control-Allow-Methods: POST, GET, DELETE, PATCH, OPTIONS\r\n".to_string()];
     HTTPResponse::from(headers)
 }

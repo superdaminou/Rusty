@@ -13,7 +13,10 @@ pub struct HTTPResponse {
 
 impl HTTPResponse {
     fn new(code: i32,headers: Vec<String>,  body: Option<&str>) -> HTTPResponse {
-        return HTTPResponse {code: code, headers: headers,  body: String::from(body.unwrap_or("")), acces_control: "*".to_string(), content_type: "application/json".to_string()};
+        return HTTPResponse {
+            code: code, 
+            headers: headers,  
+            body: String::from(body.unwrap_or("")), acces_control: "*".to_string(), content_type: "application/json".to_string()};
     }    
 }
 
@@ -40,7 +43,7 @@ fn message_from_code(code : i32) -> String {
         500 => "INTERNAL".to_string(),
         404 => "NOT FOUND".to_string(),
         400 => "MALFORMED".to_string(),
-        other  => "".to_string()
+        _  => "".to_string()
     }
 }
 

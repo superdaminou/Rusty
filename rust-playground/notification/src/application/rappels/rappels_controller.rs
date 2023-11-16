@@ -32,31 +32,29 @@ pub fn get_rappel(handler: ParamsHandler) -> Result<Response, TechnicalError> {
 
 
 pub fn add_rappel(handler : ParamsHandler) -> Result<Response, TechnicalError> {
-    let rappel = match handler.body.iter().next() {
-        None => return Err(TechnicalError::from("value")),
-        Some(body) => WriteRappel::from(body.clone()) 
-    };
-
-    return rappel_db_service::add_one(Rappel::from(rappel))
-        .map_err(|err| TechnicalError::from(err))
-        .and_then(|val| Ok(Response::from((200, val.to_string()))));
+    info!("Start adding rappel");
+    return handler.body.iter()
+        .next()
+        .ok_or(TechnicalError::from("Missing body"))
+        .map(|body| WriteRappel::extract(body.to_string()))?
+        .map(|rappel| 
+            rappel_db_service::add_one(Rappel::from(rappel))
+            .map_err(|err|TechnicalError::from(err)))?
+        .and_then(|result| Ok(Response::from((200, result.to_string()))));
 }
 
 pub fn update_rappel(handler : ParamsHandler) -> Result<Response, TechnicalError> {
     info!("Start updating");
-    let rappel = match handler.body.iter().next() {
-        None => return Err(TechnicalError::from("nooo")),
-        Some(body) => UpdateRappel::from(body.clone()) 
-    };
 
-    return match rappel_db_service::get_one(rappel.id).is_ok() {
-        true => {
-            return rappel_db_service::update_one(Rappel::from(rappel))
-                .map_err(|err| TechnicalError::from(err))
-                .and_then(|val| Ok(Response::from((200, val.to_string()))));
-        },
-        false => Ok(Response::from(404))
-    };
+    return handler.body.iter()
+        .next()
+        .ok_or(TechnicalError::from("Missing body"))
+        .map(|body| UpdateRappel::extract(body.to_string()))?
+        .map(|rappel| 
+            rappel_db_service::update_one(Rappel::from(rappel))
+            .map_err(|err| TechnicalError::from(err)))?
+        .and_then(|result| Ok(Response::from((200, result.to_string()))));
+
 }
 
 

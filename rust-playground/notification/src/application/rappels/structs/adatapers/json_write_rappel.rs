@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use log::info;
 use serde::{Deserialize, Serialize};
 
-use crate::application::rappels::structs::Rappel;
+use crate::application::{rappels::structs::Rappel, errors::TechnicalError};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct WriteRappel {
@@ -14,10 +14,10 @@ pub struct WriteRappel {
 
 
 
-impl From<String> for WriteRappel {
-    fn from(body: String) -> Self {
+impl WriteRappel {
+    pub fn extract(body: String) -> Result<WriteRappel, TechnicalError> {
         info!("Deserializing to Rappel: {}",body);
-        return serde_json::from_str(&body).unwrap();
+        return serde_json::from_str(&body).map_err(|err| TechnicalError::from(err));
     }
 }
 
@@ -26,6 +26,7 @@ impl From<WriteRappel> for Rappel {
         Rappel {id: None, nom: rappel.nom, criticite: rappel.criticite, repetition: rappel.repetition, date_limite: NaiveDate::from(rappel.date_limite)}
     }
 }
+
 
 
 
