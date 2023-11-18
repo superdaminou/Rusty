@@ -66,7 +66,7 @@ pub fn delete_rappel(handler : ParamsHandler) -> Result<Response, TechnicalError
         .next()
         .ok_or(TechnicalError::from("Malformed"))
         .map(|id| id.parse::<i32>())?
-        .map_err(|err| TechnicalError::from("Parsed Error"))
+        .map_err(|_| TechnicalError::from("Parsed Error"))
         .map(|id| rappel_db_service::get_one(id))?
         .map(|rappel| rappel.ok_or(TechnicalError::from("Not found")))?
         .map(|rappel| rappel_db_service::delete_one(rappel.id.unwrap()).map_err(|err| TechnicalError::from(err)))?

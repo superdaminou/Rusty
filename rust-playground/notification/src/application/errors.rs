@@ -2,8 +2,6 @@ use std::error::Error;
 use std::fmt;
 use serde_json::Error as SerdeError;
 use tokio_postgres::Error as PostgresError;
-use rustyttp::http::structs::http_response::HTTPResponse;
-use rustyttp::http::structs::response::Response;
 
 #[derive(Debug)]
 pub struct TechnicalError {
