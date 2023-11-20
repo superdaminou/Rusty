@@ -6,10 +6,9 @@ use std::env;
 
 use log::info;
 use dotenv::dotenv;
-use rustyttp::http::structs::ConfigBuilder;
-
 use crate::application::routes;
-
+use rustyttp::{Routes, ConfigBuilder};
+use rustyttp::open_connection;
 
 fn main() {
     info!("Starting server");
@@ -26,6 +25,7 @@ fn main() {
         .port(8080)
         .build();
     
-    rustyttp::http::connection_handling::open_connection(Some(configuration), routes::route_service::execute_request);
+    open_connection(Some(configuration), Routes::from(routes()));
+
     info!("Shutting down.");
 }

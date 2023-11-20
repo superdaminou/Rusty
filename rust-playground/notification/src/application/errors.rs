@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt;
+use rustyttp::Response;
 use serde_json::Error as SerdeError;
 use tokio_postgres::Error as PostgresError;
 
@@ -41,5 +42,11 @@ impl From<PostgresError> for TechnicalError {
 impl From<&str> for TechnicalError {
     fn from(err: &str) -> Self {
         TechnicalError::new(String::from(err))
+    }
+}
+
+impl From<TechnicalError> for Response {
+    fn from(value: TechnicalError) -> Self {
+        Response { code: 500, headers: Vec::new(), body: Some(value.to_string()) }
     }
 }

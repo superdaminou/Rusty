@@ -33,7 +33,7 @@ pub fn get_all() -> Result<Vec<Rappel>, Error> {
 }
 
 
-pub fn get_one(id: i32) -> Result<Option<Rappel>, TechnicalError> {
+pub fn get_one(id: i32) -> Result<Rappel, TechnicalError> {
     let mut client = database_service::connect()?;
     info!("Getting rappel: {}", id);
 
@@ -50,8 +50,8 @@ pub fn get_one(id: i32) -> Result<Option<Rappel>, TechnicalError> {
     client.close()?;
 
     return match rappels.iter().count() {
-        0  => Ok(None),
-        1 => Ok(Some(rappels.iter().clone().next().unwrap().clone())),
+        0  => Err(TechnicalError::from("No rappel")),
+        1 => Ok(rappels.iter().clone().next().unwrap().clone()),
         _ => Err(TechnicalError::from("Should have 1 result max"))
     };
 }
