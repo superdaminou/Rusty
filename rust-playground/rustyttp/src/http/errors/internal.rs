@@ -1,7 +1,7 @@
 use core::fmt;
 use std::{error::Error, str::Utf8Error};
 
-use crate::http::structs::{http_response::HTTPResponse, response::Response};
+use crate::http::structs::{HTTPResponse, Response};
 
 #[derive(Debug)]
 pub struct InternalError  {

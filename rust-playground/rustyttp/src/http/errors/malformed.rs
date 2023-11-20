@@ -1,18 +1,12 @@
 use core::fmt;
 use std::{error::Error, str::Utf8Error, num::ParseIntError};
 
-use crate::http::structs::{http_response::HTTPResponse, response::Response};
+use crate::http::structs::{HTTPResponse, Response};
 
 
 #[derive(Debug)]
 pub struct MalformedError  {
     details: String
-}
-
-impl MalformedError {
-    fn new(msg: String) -> MalformedError {
-        MalformedError{details: msg}
-    }
 }
 
 impl fmt::Display for MalformedError {
@@ -30,20 +24,26 @@ impl Error for MalformedError {
 
 impl From<&str> for MalformedError {
     fn from(err: &str) -> Self {
-        MalformedError::new(err.to_string())
+        MalformedError::from(err.to_string())
+    }
+}
+
+impl From<String> for MalformedError {
+    fn from(msg: String) -> MalformedError {
+        MalformedError{details: msg}
     }
 }
 
 
 impl From<Utf8Error> for MalformedError {
     fn from(err: Utf8Error) -> Self {
-        MalformedError::new(err.to_string())
+        MalformedError::from(err.to_string())
     }
 }
 
 impl From<ParseIntError> for MalformedError {
     fn from(_: ParseIntError) -> Self {
-        MalformedError::new("Expected a valid integer".to_string())
+        MalformedError::from("Expected a valid integer".to_string())
     }
 }
 

@@ -1,168 +1,197 @@
-use std::{str::FromStr, usize};
-use log::info;
+use std::{usize, str::FromStr};
+use std::str;
 
-use crate::http::errors::malformed::MalformedError;
 
-use super::HttpVerb;
+
+use crate::{http::errors::malformed::MalformedError, Verb};
+#[derive(PartialEq, Debug, Clone)]
 
 pub struct HTTPRequest {
-    pub verb: HttpVerb,
-    pub route: String,
-    pub body: Option<String>
+    pub start_line: StartLine,
+    pub header: Option<Headers>,
+    pub body: Option<Body>
 }
 
-#[derive(PartialEq, Debug)]
-struct StartLine(String, String);
+#[derive(PartialEq, Debug, Clone)]
+pub struct StartLine{
+    pub verb: Verb,
+    pub ressource: String
+}
+
+type Headers = Vec<(String, String)>;
+type Body = String;
 
 
-impl HTTPRequest {
 
-    pub fn request_from(request: &str) -> Result<HTTPRequest, MalformedError> {
-        let parsed_request : Vec<String>  = request.trim_matches(char::from(0)).split("\r\n").map(|line| line.to_string()).collect();
-        let route = self::get_route(parsed_request.first()).expect("Could not extract route");
-        info!("Route to: {} {}", route.0, route.1);
+impl TryFrom<[u8; 1024]> for HTTPRequest {
+    type Error = MalformedError;
+    fn try_from(value: [u8; 1024]) -> Result<Self, MalformedError> {
+        return str::from_utf8(&value)
+        .map_err(|error| 
+            MalformedError::from(error))
+        .map(|request| 
+            HTTPRequest::try_from(request))?
+    }
+}
 
-        let body = extract_body(parsed_request)?;
-
-        let verb = HttpVerb::from_str(route.0.as_str()).map_err(|_| MalformedError::from("Parsing error"))?;
+impl TryFrom<&str> for HTTPRequest {
+    type Error = MalformedError;
+    fn try_from(buffer: &str) -> Result<Self, MalformedError> {
+        let parsed_request = parse(buffer);
         
-        return Ok (HTTPRequest { verb: verb, route: route.1, body: Some(body)});
+        let start_line = get_start_line(parsed_request.clone())?;
+
+        let headers = extract_headers(parsed_request.clone());
+
+        let content_length = get_content_length(headers.clone())?;
+
+        let body = extract_body(parsed_request, content_length);
+    
+        return Ok (HTTPRequest { start_line: start_line, header: Some(headers), body: Some(body)});
     }
-
-
-    pub fn extract_params(&self, reference : String) -> Vec<String>{
-        info!("Extracting params from : {}", self.route);
-        let mut params : Vec<String>= Vec::new();
-    
-        let splitted_entering = self.route.split('/').collect::<Vec<_>>();
-        let splitted_reference = reference.split('/').collect::<Vec<_>>();
-    
-        for iterator in 0..splitted_entering.len() {
-            let reference_part = splitted_reference.get(iterator).unwrap();
-            let entering_part = splitted_entering.get(iterator).unwrap();
-    
-            if reference_part.starts_with('{') {
-                params.push(entering_part.to_string())
-            } 
-        }
-        params
-    
-    }
-
-
 }
 
-fn get_route(ressource_line: Option<&String>) -> Result<StartLine, MalformedError> {
-    return ressource_line.ok_or(MalformedError::from("Empty request"))
-            .map(|ressource_line|
-                ressource_line.split(' ')
-                .take(2).collect::<Vec<&str>>())
-            .and_then(|decomposed| 
-                match (decomposed.get(0), decomposed.get(1)) {
-                    (Some(a), Some(b)) =>  Ok(StartLine(a.to_string(), b.to_string())),
-                    (_, _) => Err(MalformedError::from("Missing ressource"))
-                });
 
-}
-
-fn extract_content_length(request: Vec<String>) -> Result<usize, MalformedError> {
+fn extract_body(request : Vec<String>, content_length: usize) -> Body {
     return request.iter()
-            .filter(|line| line.starts_with("Content-Length: "))
+            .skip_while(|&str| str.trim() != "")
+            .fold("".to_owned(), |acc, e| acc + e)
+            .trim()
+            .to_string()
+            .drain(0..content_length)
+            .collect();
+}
+
+fn get_start_line(request : Vec<String>) -> Result<StartLine, MalformedError> {
+    return request.iter()
+        .next()
+        .map(|start_line| StartLine::try_from((*start_line).clone()))
+        .unwrap_or(Err(MalformedError::from("Need start line")))
+}
+
+fn parse(buffer : &str) -> Vec<String> {
+    return buffer
+        .trim_matches(char::from(0))
+        .split("\r\n")
+        .map(|str| str.to_string())
+        .collect::<Vec<String>>();
+}
+
+impl TryFrom<Vec<String>> for StartLine {
+    type Error = MalformedError;
+    fn try_from(request: Vec<String>) -> Result<Self, Self::Error> {
+        return request.iter()
             .next()
-            .map(|line| line.to_string().drain("Content-Length: ".len()..)
-                .as_str()
-                .parse::<usize>()
-                .map_err(MalformedError::from))
-            .unwrap_or(Ok(0));
+            .map(|start_line| StartLine::try_from((*start_line).clone()))
+            .unwrap_or(Err(MalformedError::from("Need start line")));
+    }
 }
 
-fn extract_body(request: Vec<String> ) -> Result<String, MalformedError> {
-    info!("Start Extracting body from request");
-    // FIXME: remove clone ? 
-    let size = extract_content_length(request.clone())?;
-    info!("Content-length : {}", size);
+fn get_content_length(headers: Headers) -> Result<usize, MalformedError> {
+    return headers
+        .iter()
+        .find(|(header, _)| header.starts_with("Content-Length:"))
+        .map(|(_, value)| (*value).parse::<usize>().map_err(MalformedError::from))
+        .transpose()?
+        .ok_or(MalformedError::from("Missing Content-Length"));
+}
 
 
+fn extract_headers(request : Vec<String>) -> Headers {
     return request.iter()
-                .skip_while(|line|!(*line.trim()).eq(""))
-                .skip(1)
-                .fold("".to_string(), |acc, e| acc + e)
-                .get(0..size)
-                .map(|str| str.to_string())
-                .ok_or(MalformedError::from("smaller body than expected"));
+        .skip(1)
+        .take_while(|&str| str.trim() != "")
+        .map(|header| {
+            let mut line = header.split_ascii_whitespace();
+            return match line.next() {
+                None => None,
+                Some(str)=> Some((str.to_string(), line.next().unwrap_or("").to_string())) 
+            }
+        })
+        .filter(|line| line.is_some())
+        .flatten()
+        .collect::<Headers>();
 }
 
+
+
+
+impl TryFrom<String> for StartLine {
+    type Error = MalformedError;
+        fn try_from(value: String) -> Result<Self, MalformedError> {
+            let binding = value
+                .split(' ')
+                .take(3).collect::<Vec<&str>>();
+            let mut decomposed_start_line =  binding
+                .iter();
+            
+            let verb = decomposed_start_line
+                .next()
+                .ok_or(MalformedError::from("Missing verb"))
+                .map(|&verb| Verb::from_str(verb))??;
+
+
+            let ressource = decomposed_start_line
+                .next()
+                .ok_or(MalformedError::from("No ressource"))
+                .map(|&str| str.to_string())?;
+
+            return Ok(StartLine { verb: verb, ressource: ressource });
+}
+    
+}
 
 
 
 // UNIT TEST
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
 
 
+
     #[test]
-    fn extract_content_length_valid_1() {
-        let request =vec!["Content-Length: 1".to_string()];
-        let result = extract_content_length(request);
-        assert_eq!(result, Ok(1));
+    fn request_try_from_ok() {
+        let buffer = "POST rappel/1 HTTP/1.1\r\nContent-Length: 4\r\n\r\ntoto";
+        
+        let  request = HTTPRequest::try_from(buffer);
+        
+        let http_request = request.unwrap();
+        assert_eq!(http_request.start_line, StartLine{verb: Verb::POST, ressource: "rappel/1".to_string()});
+        assert_eq!(http_request.body, Some("toto".to_string()));
+        assert_eq!(http_request.header, Some(vec![("Content-Length:".to_string(), "4".to_string())]))
     }
 
     #[test]
-    fn extract_content_length_invalid_malformed() {
-        let request =vec!["Content-Length: a".to_string()];
-        let result = extract_content_length(request);
-        assert_eq!(result, Err(MalformedError::from("Expected a valid integer")));
+    fn request_try_from_ko() {
+        let buffer = "POST rappel/1 HTTP/1.1\r\nContent-Length: 4\r\n\r\ntoto";
+        
+        let  request = HTTPRequest::try_from(buffer);
+        
+        assert!(request.is_ok());
     }
 
     #[test]
-    fn extract_content_length_no_headers_0() {
-        let request =vec![];
-        let result = extract_content_length(request);
-        assert_eq!(result, Ok(0));
+    fn extract_body_ok() {
+        let request = vec!["POST rappel/1 HTTP/1.1".to_string()," ".to_string(),"toto".to_string(), "toto".to_string()];
+        
+        let  request = extract_body(request, 8);
+        
+        assert_eq!(request, "totototo");
     }
 
     #[test]
-    fn extract_content_length_multiple_headers_1() {
-        let request =vec!["Content-Type: web".to_string(), "Content-Length: 1".to_string()];
-        let result = extract_content_length(request);
-        assert_eq!(result, Ok(1));
+    fn extract_headers_ok() {
+        let request = vec!["ressource".to_string(),"Content-Length: 1".to_string(),"Content-type: x".to_string(), "".to_string()];
+        
+        let  request = extract_headers(request);
+        
+        assert_eq!(request, vec![("Content-Length:".to_string(), "1".to_string()),("Content-type:".to_string(), "x".to_string())]);
     }
 
-
-    #[test]
-    fn extract_body_exact_size_web() {
-        let request =vec!["Content-Length: 3".to_string(), "   ".to_string(), "web".to_string()];
-        let result = extract_body(request);
-        assert_eq!(result, Ok("web".to_string()));
-    }
-
-    #[test]
-    fn extract_body_larger_wev() {
-        let request =vec!["Content-Length: 3".to_string(), "   ".to_string(), "webuu".to_string()];
-        let result = extract_body(request);
-        assert_eq!(result, Ok("web".to_string()));
-    }
-
-    #[test]
-    fn extract_body_shorter_web() {
-        let request =vec!["Content-Length: 3".to_string(), "   ".to_string(), "we".to_string()];
-        let result = extract_body(request);
-        assert_eq!(result, Err(MalformedError::from("smaller body than expected")));
-    }
+    
 
 
-    #[test]
-    fn get_route_wrong_malformed_error() {
-        let start_line = "No".to_string();
-        let result = get_route(Some(&start_line));
-        assert_eq!(result, Err(MalformedError::from("Missing ressource")));
-    }
-
-    #[test]
-    fn get_route_right_get_ok() {
-        let start_line = "PUT /url HTTP/1.1".to_string();
-        let result = get_route(Some(&start_line));
-        assert_eq!(result, Ok(StartLine("PUT".to_string(), "/url".to_string())));
-    }
 }

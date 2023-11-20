@@ -1,9 +1,10 @@
-use std::str::FromStr;
+use std::{str::FromStr};
 
-use strum_macros::Display;
+use crate::http::errors::malformed::MalformedError;
 
-#[derive(PartialEq, Eq, Display)]
-pub enum HttpVerb {
+
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub enum Verb {
     POST,
     GET,
     PUT,
@@ -12,10 +13,10 @@ pub enum HttpVerb {
     OPTION
 }
 
-impl FromStr for HttpVerb {
-    type Err = ();
+impl FromStr for Verb {
+    type Err = MalformedError;
 
-    fn from_str(input: &str) -> Result<HttpVerb, ()> {
+    fn from_str(input: &str) -> Result<Verb, MalformedError> {
         return match input {
             "POST" => Ok(Self::POST),
             "GET" => Ok(Self::GET),
@@ -23,7 +24,7 @@ impl FromStr for HttpVerb {
             "DELETE" => Ok(Self::DELETE),
             "PATCH" => Ok(Self::PATCH),
             "OPTIONS" => Ok(Self::OPTION),
-            _ =>  panic!("Could not find verb")
+            _ =>  Err(MalformedError::from(format!("Unknown verb: {}", input)))
         }
     }
 }
